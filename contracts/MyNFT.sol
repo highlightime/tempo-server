@@ -12,7 +12,13 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 contract MyNFT is ERC721Enumerable,ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
+    mapping(uint256 => address[]) private _likes;
+    mapping(uint256 => address[]) private _dislikes;
+
     event MintEvent(uint256 newItemId, string tokenURI);
+    event LikeEvent(uint256 tokenId, address user);
+    event DislikeEvent(uint256 tokenId, address user);
+
 
     constructor() ERC721("MyNFT", "NFT") {}
 
@@ -41,6 +47,30 @@ contract MyNFT is ERC721Enumerable,ERC721URIStorage, Ownable {
             tokensId[i]=tokenOfOwnerByIndex(_owner,i);
         }
         return tokensId;
+    }
+
+    function addLike(uint256 tokenId, address user) external {
+        require(_exists(tokenId), "Profile does not exist");
+        _likes[tokenId].push(user);
+
+        emit LikeEvent(tokenId, user);
+    }
+
+    function addDislike(uint256 tokenId, address user) external {
+        require(_exists(tokenId), "Profile does not exist");
+        _dislikes[tokenId].push(user);
+
+        emit DislikeEvent(tokenId, user);
+    }
+
+    function getLikes(uint256 tokenId) external view returns (address[] memory) {
+        require(_exists(tokenId), "Profile does not exist");
+        return _likes[tokenId];
+    }
+
+    function getDislikes(uint256 tokenId) external view returns (address[] memory) {
+        require(_exists(tokenId), "Profile does not exist");
+        return _dislikes[tokenId];
     }
 
     function _beforeTokenTransfer(
