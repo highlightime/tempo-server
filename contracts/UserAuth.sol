@@ -32,4 +32,12 @@ contract UserAuth {
     function isRegistered(address userAddress) external view returns (bool) {
         return users[userAddress].exists;
     }
+
+    function setNumber(uint256 newNumber) public {
+        number = newNumber;
+    }
+
+    function increment() public {
+        number++;
+    }
 }

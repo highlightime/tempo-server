@@ -5,50 +5,88 @@ contract AppointmentContract {
         string location;
         string date;
         string time;
+        bool exists;
+        bool isMet;
+        address alice;
+        address bob;
+        mapping(address => bool) consent;
+        mapping(address => bool) depositRefunded;
     }
-    
-    mapping(uint256 => Appointment) appointments;
+
+    mapping(address => Appointment) appointments;
     uint256 public appointmentCount;
-    
-    event AppointmentAdded(uint256 indexed appointmentId, string location, string date, string time);
-    event AppointmentDeleted(uint256 indexed appointmentId);
-    event AppointmentModified(uint256 indexed appointmentId, string location, string date, string time);
-    
-    function addAppointment(string memory _location, string memory _date, string memory _time) public {
-        uint256 newAppointmentId = appointmentCount;
-        Appointment storage newAppointment = appointments[newAppointmentId];
+    uint256 public depositAmount;
+
+    event AppointmentCreated(address receiver, string location, string date, string time);
+    event AppointmentConsented(address receiver, address indexed participant, uint256 depositAmount);
+    event DepositRefunded(address receiver, address indexed participant, uint256 depositAmount);
+
+
+    constructor(uint256 _depositAmount) {
+        depositAmount = _depositAmount;
+    }
+
+    function createAppointment(address receiver, string memory _location, string memory _date, string memory _time) public {
+        Appointment storage newAppointment = appointments[receiver];
         newAppointment.location = _location;
         newAppointment.date = _date;
         newAppointment.time = _time;
-        
+        newAppointment.exists = true;
+        newAppointment.consent[receiver]=false;
+        newAppointment.consent[msg.sender]=false;
+        newAppointment.isMet=false;
+        newAppointment.alice=msg.sender;
+        newAppointment.bob=receiver;
+
         appointmentCount++;
-        
-        emit AppointmentAdded(newAppointmentId, _location, _date, _time);
+
+        emit AppointmentCreated(receiver, _location, _date, _time);
     }
-    
-    function deleteAppointment(uint256 _appointmentId) public {
-        require(_appointmentId < appointmentCount, "Invalid appointment ID");
-        
-        delete appointments[_appointmentId];
-        
-        emit AppointmentDeleted(_appointmentId);
+
+    function giveConsent(address receiver) public payable {
+        Appointment storage appointment = appointments[receiver];
+        require(appointment.exists, "Appointment does not exist");
+        require(!appointment.consent[msg.sender], "Already given consent");
+        require(msg.value >= depositAmount, "Insufficient deposit amount");
+
+        appointment.consent[msg.sender] = true;
+
+        emit AppointmentConsented(receiver, msg.sender, msg.value);
     }
-    
-    function modifyAppointment(uint256 _appointmentId, string memory _location, string memory _date, string memory _time) public {
-        require(_appointmentId < appointmentCount, "Invalid appointment ID");
-        
-        Appointment storage appointment = appointments[_appointmentId];
-        appointment.location = _location;
-        appointment.date = _date;
-        appointment.time = _time;
-        
-        emit AppointmentModified(_appointmentId, _location, _date, _time);
+
+    function refundDeposit(address receiver) public {
+        Appointment storage appointment = appointments[receiver];
+        require(appointment.exists, "Appointment does not exist");
+        require(appointment.isMet,"Havn't met");
+        require(appointment.consent[msg.sender],"Me Haven't Deposit");
+        require(appointment.consent[receiver],"Other Haven't Deposit");
+        require(!appointment.depositRefunded[msg.sender], "Me Deposit already refunded");
+        require(!appointment.depositRefunded[receiver], "Other Deposit already refunded");
+
+        if (depositAmount > 0) {
+            appointment.depositRefunded[msg.sender] = true;
+            appointment.depositRefunded[receiver] = true;
+            payable(msg.sender).transfer(depositAmount);
+            payable(appointment.bob).transfer(depositAmount);
+            emit DepositRefunded(receiver, msg.sender, depositAmount);
+        }
     }
-    
-    function getAppointment(uint256 _appointmentId) public view returns (string memory, string memory, string memory) {
-        require(_appointmentId < appointmentCount, "Invalid appointment ID");
-        
-        Appointment storage appointment = appointments[_appointmentId];
-        return (appointment.location, appointment.date, appointment.time);
+
+    function verifyMeet(address receiver) public {
+        Appointment storage appointment = appointments[receiver];
+        require(appointment.exists, "Appointment does not exist");
+        appointment.isMet=true;
     }
+
+    function getIsMet(address receiver)external view returns (bool){
+        Appointment storage appointment = appointments[receiver];
+        require(appointment.exists, "Appointment does not exist");
+        
+        return appointment.isMet;
+    }
+
+    function getAppointmentCount()external view returns (uint256){
+        return appointmentCount;
+    }
+
 }

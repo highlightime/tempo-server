@@ -1,12 +1,12 @@
 const { ethers } = require('hardhat');
 
 async function main() {
-  // const MyNFT = await ethers.getContractFactory('MyNFT');
-  // const myNFT = await MyNFT.deploy();
+  const MyNFT = await ethers.getContractFactory('MyNFT');
+  const myNFT = await MyNFT.deploy();
 
-  // await myNFT.deployed();
+  await myNFT.deployed();
 
-  // console.log('MyNFT contract deployed to:', myNFT.address);
+  console.log('MyNFT contract deployed to:', myNFT.address);
 
   const UserAuth = await ethers.getContractFactory('UserAuth');
   const userAuth = await UserAuth.deploy();
@@ -16,12 +16,12 @@ async function main() {
   console.log('UserAuth contract deployed to:', userAuth.address);
 
 
-  // const AppointmentContract = await ethers.getContractFactory('AppointmentContract');
-  // const appointmentContract = await AppointmentContract.deploy();
+  const AppointmentContract = await ethers.getContractFactory('AppointmentContract');
+  const appointmentContract = await AppointmentContract.deploy(2000000000);
 
-  // await appointmentContract.deployed();
+  await appointmentContract.deployed();
 
-  // console.log('AppointmentContract contract deployed to:', appointmentContract.address);
+  console.log('AppointmentContract contract deployed to:', appointmentContract.address);
 }
 
 main()

@@ -10,6 +10,7 @@ module.exports = {
       chainId: 2000777,
       gasPrice: 225000000000,
       accounts: [PRIVATE_KEY],
+      allowUnlimitedContractSize: true
     },
   },
   solidity: {
